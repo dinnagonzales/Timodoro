@@ -1,20 +1,21 @@
 import React from 'react';
-
+import { Box } from '../../styles';
 const slots = JSON.parse(localStorage.getItem('slots')) || [];
 
 export default function Schedule() {
     console.log( { slots });
 
     return (
-        <div>
-            { !!slots ? slots.map( slot => {
+        <Box container>
+            { !!slots ? slots.map( (slot, i) => {
                 return(
-                    <div>
-                        { slot.name }
-                        { slot.HH }:{ slot.MM }:{ slot.SS }
-                    </div>
+                    <Box key={ `${i}-${slot.timerLength}` } item xs={12}>
+                        { slot.name } ({ slot.timerLength } minutes)
+                        <br/ >
+                        Break { slot.breakLength ? slot.breakLength : '' }
+                    </Box>
                 )
             }) : null }
-        </div>
+        </Box>
     );
 }

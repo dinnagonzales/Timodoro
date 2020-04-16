@@ -1,62 +1,67 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/button';
 
+import Button from '@material-ui/core/button';
+import Slot from './slot.jsx';
+import { FormController } from './controller';
+
+import { Box } from '../../styles';
+
+const defaultValues = {
+    name: '',
+    timerLength: 20,
+    breakLength: 5,
+};
 
 export default function Form() {
-    const [ slots, updateSlots ] = useState(JSON.parse(localStorage.getItem('slots')) || []);
-    console.log( { slots });
-    const save = (e) => {
-        const {
-            name,
-            HH,
-            MM,
-            SS
-        } = e.target;
-        const slotsCopy = _.cloneDeep(slots);
-        slotsCopy.push({
-            name: name.value,
-            HH: HH.value,
-            MM: MM.value,
-            SS: SS.value,
-        });
+    const { slots, nextSlot, handleSubmit, handleSave, handleDelete } = FormController();
+    const [ editIndex, setEditIndex ] = useState("");
+    const editMode = editIndex !== "";
 
-        localStorage.setItem('slots', JSON.stringify(slotsCopy));
-    };
     return (
-        <form noValidate autoComplete="off" onSubmit={ (e) => save(e) }>
-            <TextField 
-                name={ 'name' }
-                label={ 'Name' }
-                type={ 'text' }
-                variant={ 'outlined' } />
-            <TextField 
-                name={ 'HH' }
-                label={ 'HH' }
-                type={ 'number' }
-                variant={ 'outlined' } />
-            <TextField 
-                name={ 'MM' }
-                label={ 'MM' }
-                type={ 'number' }
-                variant={ 'outlined' } />
-            <TextField 
-                name={ 'SS' }
-                label={ 'SS' }
-                type={ 'number' }
-                variant={ 'outlined' } />
+        <form noValidate autoComplete="off" onSubmit={ (e) => handleSubmit(e) }>
+            <Box container>
 
-            { !!slots ? slots.map( slot => {
-                return(
-                    <div>
-                        { slot.name }
-                        { slot.HH }:{ slot.MM }:{ slot.SS }
-                    </div>
-                )
-            }) : null }
-           
-            <Button type={ 'submit' } >Save</Button>
+                { !!slots ? slots.map( (slot, i) => {
+                    const { name, timerLength, breakLength } = slot;
+                    const disabledEdit = editIndex !== "" && i !== editIndex;
+                    if(i === editIndex){
+                        return(
+                            <Slot key={ `${i}-${name}-${timerLength}` }
+                                index={ editIndex }    
+                                data={ slots[i] }
+                                handleCancel={ () => setEditIndex("") }
+                                handleSave={ (e, index, slot) => {
+                                    setEditIndex("");
+                                    handleSave(e, index, slot); 
+                                }} />
+                        );
+                    }else{
+                        return(
+                            <Box key={ `${i}-${name}-${timerLength}` } item xs={12}>
+                                { slot.name } ({ timerLength } minutes)
+                                <br/ >
+                                Break { breakLength ? breakLength : '' }
+
+                                <Button disabled={ disabledEdit } type={ 'button' } onClick={ () => { setEditIndex(i) }} >
+                                    Edit
+                                </Button>
+                                <Button disabled={ disabledEdit } type={ 'button' } onClick={ () => { handleDelete(i) }} >
+                                    Delete
+                                </Button>
+                            </Box>
+                        )
+                    }
+                }) : null }
+                
+                <Box item xs={12} lg={12}>
+                    <h2>New Slot</h2>
+                    <Slot data={ defaultValues } index={ nextSlot } handleSave={ handleSave } disabled={ editMode } />
+                </Box>
+                <Box container>
+                    <Button type={ 'submit' } disabled={ editMode }>Save & Close</Button>
+                </Box>
+            </Box>
         </form>
     );
 }
